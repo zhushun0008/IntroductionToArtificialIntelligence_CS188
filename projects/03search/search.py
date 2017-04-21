@@ -81,16 +81,16 @@ def nullHeuristic(state, problem=None):
     """
     return 0
 
-def isAllSuccessorsExplored(currentState, exploredStateSet, problem):
-    allSuccessorsExploredFlag = True
-    for nextStateInfo in problem.getSuccessors(currentState):
-        if not(nextStateInfo[0] in exploredStateSet):
-            allSuccessorsExploredFlag = False
-            break
-    return allSuccessorsExploredFlag
-
-def addOneNode(nodeDict, currentState, parentState):
-    nodeDict[currentState] = {'parentState': parentState}
+# def isAllSuccessorsExplored(currentState, exploredStateSet, problem):
+#     allSuccessorsExploredFlag = True
+#     for nextStateInfo in problem.getSuccessors(currentState):
+#         if not(nextStateInfo[0] in exploredStateSet):
+#             allSuccessorsExploredFlag = False
+#             break
+#     return allSuccessorsExploredFlag
+#
+# def addOneNode(nodeDict, currentState, parentState):
+#     nodeDict[currentState] = {'parentState': parentState}
 
 
 class Node(object):
@@ -116,7 +116,7 @@ class generalSolver(object):
     def __init__(self, problem, searchType='dfs', heuristic=nullHeuristic):
         self.pathSeq = []
         self.totalPathCost = 0
-        self.NodeDict = {}
+        self.nodeDict = {}
         self.fringeStateSet = set()
         self.exploredStateSet = set()
         self.usePriority = False
@@ -132,23 +132,29 @@ class generalSolver(object):
             self.fringe = util.Queue()
         else:
             self.fringe = util.Stack()
-
+    def getNodeFromState(self, state):
+        return self.nodeDict[state]
     def addNode(self, state, fromAction, fromCost, parent):
         newNode = Node(state, fromAction, fromCost, parent)
-        self.NodeDict[state] = newNode
+        self.nodeDict[state] = newNode
         return newNode
 
     def fringePush(self, newNode):
         if self.usePriority:
-            self.fringe.push(newNode, newNode.getCostSoFar() + self.heuristic(newNode.getState(), self.problem))
+            self.fringe.push(newNode.getState(), newNode.getCostSoFar() + self.heuristic(newNode.getState(), self.problem))
         else:
-            self.fringe.push(newNode)
+            self.fringe.push(newNode.getState())
+        self.nodeDict[newNode.getState()] = newNode
         self.fringeStateSet.add(newNode.getState())
-
+    # def fringeUpdate(self, newNode):
+    #     self.fringe.update
     def fringePop(self):
-        node = self.fringe.pop()
-        self.fringeStateSet.remove(node.getState())
-        return node
+        state = self.fringe.pop()
+        self.fringeStateSet.remove(state)
+        return self.nodeDict[state]
+    def fringeUpdate(self, newNode):
+        self.nodeDict[newNode.getState()] = newNode
+        self.fringe.update(newNode.getState(), newNode.getCostSoFar() + self.heuristic(newNode.getState(), self.problem))
     def isEmptyFringe(self):
         return self.fringe.isEmpty()
 
@@ -157,11 +163,11 @@ class generalSolver(object):
         self.totalPathCost = goalNode.getCostSoFar()
         while goalNode:
             goalState = goalNode.getState()
-            fromAction = self.NodeDict[goalState].getFromAction()
+            fromAction = self.nodeDict[goalState].getFromAction()
             if fromAction != None:
                 self.pathSeq.append(fromAction)
 
-            goalNode = self.NodeDict[goalState].getParentNode()
+            goalNode = self.nodeDict[goalState].getParentNode()
 
 
         self.pathSeq.reverse()
@@ -178,24 +184,29 @@ class generalSolver(object):
 
     def solveProblem(self):
         startState = self.problem.getStartState()
-        startNode = self.addNode(startState, None, 0, None)
+        startNode = Node(startState, None, 0, None)
         self.fringePush(startNode)
 
         while not self.isEmptyFringe():
             currentNode = self.fringePop()
-            print "Is the start a goal?", self.problem.isGoalState(currentNode.getState()),currentNode.getState()
+            # print "Is the start a goal?", self.problem.isGoalState(currentNode.getState()),currentNode.getState()
 
             if self.problem.isGoalState(currentNode.getState()):
                 goalPath = self.getPathToGoalNode(currentNode)
+
                 print "goal path length is ",len(goalPath)
                 return goalPath
+            print currentNode.getState()
+            print currentNode.getCostSoFar()
             self.makeExploredNode(currentNode)
             for (toState, fromAction, fromCost) in self.problem.getSuccessors(currentNode.getState()):
                 # print(toState, fromAction, fromCost)
-                tempNode = Node(toState, fromCost, fromCost,currentNode)
+                tempNode = Node(toState, fromAction, fromCost,currentNode)
                 if not(self.isNodeExplored(tempNode) or self.isNodeInFringe(tempNode)):
-                    newNode = self.addNode(toState, fromAction, fromCost, currentNode)
+                    newNode = Node(toState, fromAction, fromCost, currentNode)
                     self.fringePush(newNode)
+                elif tempNode.getCostSoFar() < self.nodeDict[toState].getCostSoFar():
+                    self.fringeUpdate(tempNode)
         print  "Can't not find a path to the goal state!!!"
         return []
 

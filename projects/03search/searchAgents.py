@@ -517,22 +517,23 @@ class ClosestDotSearchAgent(SearchAgent):
 
         # "*** YOUR CODE HERE ***"
         # util.raiseNotDefined()
-        # problem = AnyFoodSearchProblem(gameState)
-        # astarSearch = search.generalSolver(problem, 'astar')
-        # return astarSearch.solveProblem()
-        minPathCost = 99999
-        goal = None
-        for xy2 in food.asList():
-            currentPathCost = abs(startPosition[0] - xy2[0]) + abs(startPosition[1] - xy2[1])
-            if currentPathCost < minPathCost:
-                goal = xy2
-                minPathCost = currentPathCost
-        if goal != None:
-            problem = PositionSearchProblem(gameState=gameState, goal=goal)
-        else:
-            problem = AnyFoodSearchProblem(gameState)
+        problem = AnyFoodSearchProblem(gameState)
         astarSearch = search.generalSolver(problem, 'astar')
         return astarSearch.solveProblem()
+
+        # minPathCost = 99999
+        # goal = None
+        # for xy2 in food.asList():
+        #     currentPathCost = abs(startPosition[0] - xy2[0]) + abs(startPosition[1] - xy2[1])
+        #     if currentPathCost < minPathCost:
+        #         goal = xy2
+        #         minPathCost = currentPathCost
+        # if goal != None:
+        #     problem = PositionSearchProblem(gameState=gameState, goal=goal)
+        # else:
+        #     problem = AnyFoodSearchProblem(gameState)
+        # astarSearch = search.generalSolver(problem, 'astar')
+        # return astarSearch.solveProblem()
 
 
 class AnyFoodSearchProblem(PositionSearchProblem):
