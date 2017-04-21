@@ -289,12 +289,11 @@ class CornersProblem(search.SearchProblem):
         # Please add any code here which you would like to use
         # in initializing the problem
         # "*** YOUR CODE HERE ***"
-        goal = []
         self.numGoalExplored = 0
-        for corner in self.corners:
-            if startingGameState.hasFood(*corner):
-                goal.append(corner)
-        self.goal = tuple(goal)
+        # for corner in self.corners:
+        #     if startingGameState.hasFood(*corner):
+        #         goal.append(corner)
+        # self.goal = tuple(goal)
         self.costFn = lambda x: 1
 
 
@@ -305,7 +304,7 @@ class CornersProblem(search.SearchProblem):
         """
         # "*** YOUR CODE HERE ***"
         # util.raiseNotDefined()
-        return (self.startingPosition, self.goal)
+        return (self.startingPosition, self.corners)
 
     def isGoalState(self, state):
         """
@@ -384,11 +383,15 @@ def cornersHeuristic(state, problem):
 
     # "*** YOUR CODE HERE ***"
     # return 0 # Default to trivial solution
-    toalManhattanDistance = 0.0
+    minManhattanDistance = 99999
     xy1 = state[0]
+    if len(state[1]) == 0:
+        return 0
     for xy2 in state[1]:
-        toalManhattanDistance +=abs(xy1[0] - xy2[0]) + abs(xy1[1] - xy2[1])
-    return toalManhattanDistance
+        tempManhattanDistance = abs(xy1[0] - xy2[0]) + abs(xy1[1] - xy2[1])
+        if tempManhattanDistance < minManhattanDistance:
+            minManhattanDistance = tempManhattanDistance
+    return minManhattanDistance
 
 class AStarCornersAgent(SearchAgent):
     "A SearchAgent for FoodSearchProblem using A* and your foodHeuristic"
@@ -482,10 +485,15 @@ def foodHeuristic(state, problem):
     """
     # "*** YOUR CODE HERE ***"
     position, foodGrid = state
-    toalManhattanDistance = 0.0
-    for toOtherPostition in foodGrid.asList():
-        toalManhattanDistance += abs(position[0] - toOtherPostition[0]) + abs(position[1] - toOtherPostition[1])
-    return toalManhattanDistance
+    minManhattanDistance = 9999
+    foodList = foodGrid.asList()
+    if len(foodList) == 0:
+        return 0
+    for toOtherPostition in foodList:
+        tempManhattanDistance = abs(position[0] - toOtherPostition[0]) + abs(position[1] - toOtherPostition[1])
+        if tempManhattanDistance < minManhattanDistance:
+            minManhattanDistance = tempManhattanDistance
+    return minManhattanDistance
 
 
 class ClosestDotSearchAgent(SearchAgent):

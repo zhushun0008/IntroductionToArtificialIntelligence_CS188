@@ -132,8 +132,10 @@ class generalSolver(object):
             self.fringe = util.Queue()
         else:
             self.fringe = util.Stack()
+
     def getNodeFromState(self, state):
         return self.nodeDict[state]
+
     def addNode(self, state, fromAction, fromCost, parent):
         newNode = Node(state, fromAction, fromCost, parent)
         self.nodeDict[state] = newNode
@@ -152,12 +154,13 @@ class generalSolver(object):
         state = self.fringe.pop()
         self.fringeStateSet.remove(state)
         return self.nodeDict[state]
+
     def fringeUpdate(self, newNode):
         self.nodeDict[newNode.getState()] = newNode
         self.fringe.update(newNode.getState(), newNode.getCostSoFar() + self.heuristic(newNode.getState(), self.problem))
+
     def isEmptyFringe(self):
         return self.fringe.isEmpty()
-
 
     def getPathToGoalNode(self, goalNode):
         self.totalPathCost = goalNode.getCostSoFar()
@@ -169,9 +172,8 @@ class generalSolver(object):
 
             goalNode = self.nodeDict[goalState].getParentNode()
 
-
         self.pathSeq.reverse()
-        print "the path is ",self.pathSeq
+        # print "the path is ",self.pathSeq
         return self.pathSeq
 
     def isNodeInFringe(self, node):
@@ -184,6 +186,7 @@ class generalSolver(object):
 
     def solveProblem(self):
         startState = self.problem.getStartState()
+        # print "Start's successors:", self.problem.getSuccessors(self.problem.getStartState())
         startNode = Node(startState, None, 0, None)
         self.fringePush(startNode)
 
@@ -193,11 +196,10 @@ class generalSolver(object):
 
             if self.problem.isGoalState(currentNode.getState()):
                 goalPath = self.getPathToGoalNode(currentNode)
-
-                print "goal path length is ",len(goalPath)
+                # print "goal path length is ",len(goalPath)
                 return goalPath
-            print currentNode.getState()
-            print currentNode.getCostSoFar()
+            # print currentNode.getState()
+            # print currentNode.getCostSoFar()
             self.makeExploredNode(currentNode)
             for (toState, fromAction, fromCost) in self.problem.getSuccessors(currentNode.getState()):
                 # print(toState, fromAction, fromCost)
