@@ -364,7 +364,23 @@ class CornersProblem(search.SearchProblem):
             if self.walls[x][y]: return 999999
         return len(actions)
 
+def getManhatDistance(fromPoint, toPoint):
+    return abs(fromPoint[0] - toPoint[0]) + abs(fromPoint[1] - toPoint[1])
 
+def getTwoFarestPoint(pointList):
+    numPoint = len(pointList)
+    farestDistance = -1
+    foundStartPoint = None
+    foundToPoint = None
+    if numPoint >= 2:
+        for fromPoint in pointList[:-1]:
+            for toPoint in pointList[1:]:
+                tempDistance = getManhatDistance(fromPoint, toPoint)
+                if tempDistance > farestDistance:
+                    farestDistance = tempDistance
+                    foundStartPoint = fromPoint
+                    foundToPoint = toPoint
+    return (foundStartPoint, foundToPoint)
 def cornersHeuristic(state, problem):
     """
     A heuristic for the CornersProblem that you defined.
