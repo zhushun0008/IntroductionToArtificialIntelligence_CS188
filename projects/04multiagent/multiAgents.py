@@ -40,7 +40,7 @@ class ReflexAgent(Agent):
         """
         # Collect legal moves and successor states
         legalMoves = gameState.getLegalActions()
-        print "the legal mcves are",legalMoves
+        # print "the legal mcves are",legalMoves
         # Choose one of the best actions
         scores = [self.evaluationFunction(gameState, action) for action in legalMoves]
         bestScore = max(scores)
@@ -68,34 +68,59 @@ class ReflexAgent(Agent):
         """
         # Useful information you can extract from a GameState (pacman.py)
         successorGameState = currentGameState.generatePacmanSuccessor(action)
+        numCurrentFood = len(currentGameState.getFood().asList())
         newPos = successorGameState.getPacmanPosition()
         newFood = successorGameState.getFood()
+        numNewFood = len(newFood.asList())
         newGhostStates = successorGameState.getGhostStates()
         newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
-        print 'I am here'
-        print successorGameState
-        print newPos
-        print newFood.asList()
-        cloestFoodDistance = 99999
+        if successorGameState.isWin():
+            winScore = 1
+        else:
+            winScore = 0
+        if numNewFood < numCurrentFood:
+            numFoodScore = 1.0
+        else:
+            numFoodScore = 0.0
+        if successorGameState.isLose():
+            loseScore = -1
+        else:
+            loseScore = 0
+        # print 'I am here'
+        # print successorGameState
+        # print newPos
+        # print newFood.asList()
+        maxReciprocalFoodDistance = 0.0
+        totalDistance =0.5
         for foodLocation in newFood.asList():
             toFoodDistance = manhattanDistance(newPos, foodLocation)
-            print toFoodDistance
-            if toFoodDistance < cloestFoodDistance:
-                cloestFoodDistance = toFoodDistance
+            totalDistance += toFoodDistance
+            toReciprocalDistance = 1.0/(1+toFoodDistance)
+            if toReciprocalDistance < maxReciprocalFoodDistance:
+                maxReciprocalFoodDistance = toReciprocalDistance
         # print newGhostStates
         # print newScaredTimes
         minDistanceToGhost = 99999
-        for tempGhostState in newGhostStates:
-            distanceToGhost = manhattanDistance(newPos, tempGhostState.getPosition())
-            if distanceToGhost < minDistanceToGhost:
-                minDistanceToGhost = distanceToGhost
+        distanceToGhostList = [manhattanDistance(newPos, tempGhostState.getPosition()) for tempGhostState in newGhostStates]
+        if min(distanceToGhostList) >2:
+            ghostScore = 0.0
+        else:
+            ghostScore = -1.0
 
         # print newScaredTimes
-        print 1.0 / cloestFoodDistance
-        if newScaredTimes[0] != 0:
-            return currentGameState.getScore()
-        else:
-            return currentGameState.getScore() + math.sqrt(1+minDistanceToGhost)
+        reciprocalDistance = 1.0 / totalDistance
+        totalScore = 0.5 * (1 + reciprocalDistance) + 0.5 * maxReciprocalFoodDistance + winScore + 0.5 * numFoodScore
+        if sum(newScaredTimes) == 0:
+            totalScore += 1.5*ghostScore
+        return totalScore
+
+
+
+        #
+        # if newScaredTimes[0] != 0:
+        #     return reciprocalDistance
+        # else:
+        #     return 0.5*reciprocalDistance + 0.5*minDistanceToGhost
 
 def scoreEvaluationFunction(currentGameState):
     """
