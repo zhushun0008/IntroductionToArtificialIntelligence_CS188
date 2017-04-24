@@ -302,7 +302,41 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
     """
       Your expectimax agent (question 4)
     """
+    def expectation_value(self, gameState, unexploredDepth, adversarialIndex):
+        legalMoves = gameState.getLegalActions(adversarialIndex)
+        unexploredDepth -= 1
+        bestAction = None
+        if gameState.isWin() or gameState.isLose() or unexploredDepth == 0:
+            return (bestAction, self.evaluationFunction(gameState))
+        if adversarialIndex != gameState.getNumAgents()-1:
+            nextAgentIndex = adversarialIndex + 1
+            nextScores = []
+            for nextAction in legalMoves:
+                sccessorState = gameState.generateSuccessor(adversarialIndex, nextAction)
+                (nextGhostAction, nextGhostBestScore) = self.expectation_value(sccessorState, unexploredDepth, nextAgentIndex)
+                nextScores.append(nextGhostBestScore)
+            return (bestAction, float(sum(nextScores))/ len(legalMoves))
+        else:
+            nextScores = []
+            for nextAction in legalMoves:
+                sccessorState = gameState.generateSuccessor(adversarialIndex, nextAction)
+                (nextGhostAction, nextGhostBestScore) = self.max_value(sccessorState, unexploredDepth)
+                nextScores.append(nextGhostBestScore)
+            return (bestAction, float(sum(nextScores))/ len(legalMoves))
 
+    def max_value(self, gameState, unexploredDepth, adversarialIndex=1):
+        legalMoves = gameState.getLegalActions()
+        unexploredDepth -= 1
+        nextScores = []
+        if gameState.isWin() or gameState.isLose() or unexploredDepth == 0:
+            return (None, self.evaluationFunction(gameState))
+        for nextAction in legalMoves:
+            successorState = gameState.generateSuccessor(0, nextAction)
+            nextScores.append(self.expectation_value(successorState, unexploredDepth, adversarialIndex)[1])
+        bestScore = max(nextScores)
+        bestIndices = [index for index in range(len(nextScores)) if nextScores[index] == bestScore]
+        chosenIndex = random.choice(bestIndices) # Pick randomly among the best
+        return (legalMoves[chosenIndex], bestScore)
     def getAction(self, gameState):
         """
           Returns the expectimax action using self.depth and self.evaluationFunction
@@ -310,8 +344,10 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
           All ghosts should be modeled as choosing uniformly at random from their
           legal moves.
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        # "*** YOUR CODE HERE ***"
+        # util.raiseNotDefined()
+        (action, bestScore) = self.max_value(gameState, self.depth*gameState.getNumAgents()+1)
+        return action
 
 def betterEvaluationFunction(currentGameState):
     """
