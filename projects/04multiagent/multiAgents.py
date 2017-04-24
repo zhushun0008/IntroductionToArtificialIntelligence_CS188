@@ -15,9 +15,9 @@
 from util import manhattanDistance
 from game import Directions
 import random, util
-
+import math
 from game import Agent
-
+import time
 class ReflexAgent(Agent):
     """
       A reflex agent chooses an action at each choice point by examining
@@ -40,7 +40,7 @@ class ReflexAgent(Agent):
         """
         # Collect legal moves and successor states
         legalMoves = gameState.getLegalActions()
-
+        print "the legal mcves are",legalMoves
         # Choose one of the best actions
         scores = [self.evaluationFunction(gameState, action) for action in legalMoves]
         bestScore = max(scores)
@@ -72,9 +72,30 @@ class ReflexAgent(Agent):
         newFood = successorGameState.getFood()
         newGhostStates = successorGameState.getGhostStates()
         newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
+        print 'I am here'
+        print successorGameState
+        print newPos
+        print newFood.asList()
+        cloestFoodDistance = 99999
+        for foodLocation in newFood.asList():
+            toFoodDistance = manhattanDistance(newPos, foodLocation)
+            print toFoodDistance
+            if toFoodDistance < cloestFoodDistance:
+                cloestFoodDistance = toFoodDistance
+        # print newGhostStates
+        # print newScaredTimes
+        minDistanceToGhost = 99999
+        for tempGhostState in newGhostStates:
+            distanceToGhost = manhattanDistance(newPos, tempGhostState.getPosition())
+            if distanceToGhost < minDistanceToGhost:
+                minDistanceToGhost = distanceToGhost
 
-        "*** YOUR CODE HERE ***"
-        return successorGameState.getScore()
+        # print newScaredTimes
+        print 1.0 / cloestFoodDistance
+        if newScaredTimes[0] != 0:
+            return currentGameState.getScore()
+        else:
+            return currentGameState.getScore() + math.sqrt(1+minDistanceToGhost)
 
 def scoreEvaluationFunction(currentGameState):
     """
@@ -106,10 +127,52 @@ class MultiAgentSearchAgent(Agent):
         self.evaluationFunction = util.lookup(evalFn, globals())
         self.depth = int(depth)
 
+
 class MinimaxAgent(MultiAgentSearchAgent):
     """
       Your minimax agent (question 2)
     """
+
+    def min_value(self, gameState, unexploredDepth, adversarialIndex):
+        legalMoves = gameState.getLegalActions(adversarialIndex)
+        unexploredDepth -= 1
+        if gameState.isWin() or gameState.isLose() or unexploredDepth == 0:
+            return (None, self.evaluationFunction(gameState))
+        if adversarialIndex != gameState.getNumAgents()-1:
+            nextAgentIndex = adversarialIndex + 1
+            nextScores = []
+            for nextAction in legalMoves:
+                sccessorState = gameState.generateSuccessor(adversarialIndex, nextAction)
+                (nextGhostAction, nextGhostBestScore) = self.min_value(sccessorState, unexploredDepth, nextAgentIndex)
+                nextScores.append((nextAction, nextGhostBestScore))
+            return min(nextScores, key=lambda k: k[1])
+        else:
+            nextScores = []
+            for nextAction in legalMoves:
+                sccessorState = gameState.generateSuccessor(adversarialIndex, nextAction)
+                (nextPacmanAction, nextPacmanBestScore) = self.max_value(sccessorState, unexploredDepth)
+                nextScores.append((nextAction, nextPacmanBestScore))
+            return min(nextScores, key=lambda k: k[1])
+
+
+    def max_value(self, gameState, unexploredDepth, adversarialIndex=1):
+        legalMoves = gameState.getLegalActions()
+        unexploredDepth -= 1
+        # print "In Max..."
+        # print legalMoves
+        # print unexploredDepth
+        # print 'end max...'
+        # time.sleep(2)
+        nextScores = []
+        if gameState.isWin() or gameState.isLose() or unexploredDepth == 0:
+            return (None, self.evaluationFunction(gameState))
+        for nextAction in legalMoves:
+            successorState = gameState.generateSuccessor(0, nextAction)
+            nextScores.append(self.min_value(successorState, unexploredDepth, adversarialIndex)[1])
+            bestScore = max(nextScores)
+        bestIndices = [index for index in range(len(nextScores)) if nextScores[index] == bestScore]
+        chosenIndex = random.choice(bestIndices) # Pick randomly among the best
+        return (legalMoves[chosenIndex], bestScore)
 
     def getAction(self, gameState):
         """
@@ -134,8 +197,28 @@ class MinimaxAgent(MultiAgentSearchAgent):
           gameState.isLose():
             Returns whether or not the game state is a losing state
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+
+        # "*** YOUR CODE HERE ***"
+        # util.raiseNotDefined()
+        # legalMoves = gameState.getLegalActions()
+        #
+        # # Choose one of the best actions
+        # numAgents = gameState.getNumAgents()
+        # self.unexploredDepth = self.depth * numAgents + 1
+        # scores = [self.min_value(gameState, action, numAgents-1) for action in legalMoves]
+        # bestScore = max(scores)
+        # bestIndices = [index for index in range(len(scores)) if scores[index] == bestScore]
+        # chosenIndex = random.choice(bestIndices) # Pick randomly among the best
+        # print gameState.generateSuccessor()
+        # print "unexploredDepth",self.depth*gameState.getNumAgents()+1
+        # print gameState.getNumAgents()
+        # print self.depth
+        (action, bestScore) = self.max_value(gameState, self.depth*gameState.getNumAgents()+1)
+
+        "Add more of your code here if you want to"
+
+        return action
+
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
