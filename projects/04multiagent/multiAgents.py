@@ -126,6 +126,8 @@ class MultiAgentSearchAgent(Agent):
         self.index = 0 # Pacman is always agent index 0
         self.evaluationFunction = util.lookup(evalFn, globals())
         self.depth = int(depth)
+        self.minUtility = -999999
+        self.maxUtility = 999999
 
 
 class MinimaxAgent(MultiAgentSearchAgent):
@@ -169,7 +171,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
         for nextAction in legalMoves:
             successorState = gameState.generateSuccessor(0, nextAction)
             nextScores.append(self.min_value(successorState, unexploredDepth, adversarialIndex)[1])
-            bestScore = max(nextScores)
+        bestScore = max(nextScores)
         bestIndices = [index for index in range(len(nextScores)) if nextScores[index] == bestScore]
         chosenIndex = random.choice(bestIndices) # Pick randomly among the best
         return (legalMoves[chosenIndex], bestScore)
@@ -224,13 +226,77 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
     """
       Your minimax agent with alpha-beta pruning (question 3)
     """
+    def min_value(self, alpha, beta, gameState, unexploredDepth, adversarialIndex):
+        legalMoves = gameState.getLegalActions(adversarialIndex)
+        unexploredDepth -= 1
+        minUtility = self.maxUtility
+        bestAction = None
+        if gameState.isWin() or gameState.isLose() or unexploredDepth == 0:
+            return (bestAction, self.evaluationFunction(gameState))
+        if adversarialIndex != gameState.getNumAgents()-1:
+            nextAgentIndex = adversarialIndex + 1
+            nextScores = []
+            for nextAction in legalMoves:
+                sccessorState = gameState.generateSuccessor(adversarialIndex, nextAction)
+                (nextGhostAction, nextGhostMinUtility) = self.min_value(alpha, beta, sccessorState, unexploredDepth, nextAgentIndex)
+                nextScores.append((nextAction, nextGhostMinUtility))
+                if minUtility > nextGhostMinUtility:
+                    minUtility = nextGhostMinUtility
+                    bestAction = nextAction
+                if minUtility < alpha:
+                    break
+                if minUtility < beta:
+                    beta = minUtility
+            return (bestAction, minUtility)
+        else:
+            for nextAction in legalMoves:
+                sccessorState = gameState.generateSuccessor(adversarialIndex, nextAction)
+                (nextPacmanAction, nextPacmanMaxUtility) = self.max_value(alpha, beta, sccessorState, unexploredDepth)
+                if minUtility > nextPacmanMaxUtility:
+                    minUtility = nextPacmanMaxUtility
+                    bestAction = nextAction
+                if minUtility < alpha:
+                    break
+                if minUtility < beta:
+                    beta = minUtility
+            return (bestAction, minUtility)
 
+
+    def max_value(self, alpha, beta, gameState, unexploredDepth, adversarialIndex=1):
+        legalMoves = gameState.getLegalActions()
+        unexploredDepth -= 1
+        maxUtility = self.minUtility
+        bestAction = None
+        # print "In Max..."
+        # print legalMoves
+        # print unexploredDepth
+        # print 'end max...'
+        # time.sleep(2)
+        nextScores = []
+        if gameState.isWin() or gameState.isLose() or unexploredDepth == 0:
+            return (bestAction, self.evaluationFunction(gameState))
+        for nextAction in legalMoves:
+            successorState = gameState.generateSuccessor(0, nextAction)
+            (adversarialAction, adversarialUtility) = self.min_value(alpha, beta, successorState, unexploredDepth, adversarialIndex)
+            if maxUtility < adversarialUtility:
+                maxUtility = adversarialUtility
+                bestAction = nextAction
+            if maxUtility > beta:
+                break
+            if maxUtility > alpha:
+                alpha = maxUtility
+
+        return (bestAction, maxUtility)
     def getAction(self, gameState):
         """
           Returns the minimax action using self.depth and self.evaluationFunction
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        # "*** YOUR CODE HERE ***"
+        # util.raiseNotDefined()
+        alpha = self.minUtility
+        beta = self.maxUtility
+        (bestAction, bestScore) = self.max_value(alpha, beta, gameState, self.depth * gameState.getNumAgents() + 1)
+        return bestAction
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
