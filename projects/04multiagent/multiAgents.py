@@ -73,7 +73,6 @@ class ReflexAgent(Agent):
         newFood = successorGameState.getFood()
         numNewFood = len(newFood.asList())
         newGhostStates = successorGameState.getGhostStates()
-        newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
         if successorGameState.isWin():
             winScore = 1
         else:
@@ -86,10 +85,7 @@ class ReflexAgent(Agent):
             loseScore = -1
         else:
             loseScore = 0
-        # print 'I am here'
-        # print successorGameState
-        # print newPos
-        # print newFood.asList()
+
         maxReciprocalFoodDistance = 0.0
         totalDistance =0.5
         for foodLocation in newFood.asList():
@@ -100,18 +96,16 @@ class ReflexAgent(Agent):
                 maxReciprocalFoodDistance = toReciprocalDistance
         # print newGhostStates
         # print newScaredTimes
-        minDistanceToGhost = 99999
-        distanceToGhostList = [manhattanDistance(newPos, tempGhostState.getPosition()) for tempGhostState in newGhostStates]
-        if min(distanceToGhostList) >2:
-            ghostScore = 0.0
-        else:
-            ghostScore = -1.0
+        distanceToGhostList = [manhattanDistance(newPos, tempGhostState.getPosition()) for tempGhostState in newGhostStates if tempGhostState.scaredTimer ==0]
+        ghostScore = 0.0
+        if len(distanceToGhostList) != 0:
+            if min(distanceToGhostList) <= 2:
+                ghostScore = -1.0
 
         # print newScaredTimes
         reciprocalDistance = 1.0 / totalDistance
-        totalScore = 0.5 * (1 + reciprocalDistance) + 0.5 * maxReciprocalFoodDistance + winScore + 0.5 * numFoodScore
-        if sum(newScaredTimes) == 0:
-            totalScore += 1.5*ghostScore
+        totalScore = 0.5 * (1 + reciprocalDistance) + 0.5 * maxReciprocalFoodDistance + winScore + 0.5 * numFoodScore + 1.5*ghostScore
+
         return totalScore
 
 
@@ -383,6 +377,7 @@ def betterEvaluationFunction(currentGameState):
     """
     "*** YOUR CODE HERE ***"
     util.raiseNotDefined()
+
 
 # Abbreviation
 better = betterEvaluationFunction
