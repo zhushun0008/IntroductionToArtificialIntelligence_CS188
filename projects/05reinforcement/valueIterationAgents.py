@@ -62,7 +62,18 @@ class ValueIterationAgent(ValueEstimationAgent):
     def runValueIteration(self):
         # Write value iteration code here
         "*** YOUR CODE HERE ***"
-
+        for i in xrange(self.iterations):
+            newValues = util.Counter()
+            for state in self.mdp.getStates():
+                # If signing None to terminal state, we cant get default 0 anymore.
+                if not self.mdp.isTerminal(state):
+                    newValues[state] = None
+                    for action in self.mdp.getPossibleActions(state):
+                        curValue = self.computeQValueFromValues(state, action)
+                        if newValues[state] == None or newValues[state] < curValue:
+                            newValues[state] = curValue
+            for state in self.mdp.getStates():
+                self.values[state] = newValues[state]
 
     def getValue(self, state):
         """
@@ -77,7 +88,11 @@ class ValueIterationAgent(ValueEstimationAgent):
           value function stored in self.values.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        qValue = 0.0
+        stateAndProbList = self.mdp.getTransitionStatesAndProbs(state, action)
+        for (nextState, tempProb) in stateAndProbList:
+            qValue += tempProb * (self.mdp.getReward(state, action, nextState) + self.discount * self.getValue(nextState))
+        return qValue
 
     def computeActionFromValues(self, state):
         """
@@ -89,7 +104,20 @@ class ValueIterationAgent(ValueEstimationAgent):
           terminal state, you should return None.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        if self.mdp.isTerminal(state):
+            return None
+        bestAction = None
+        bestValue = None
+        possibleActionList = self.mdp.getPossibleActions(state)
+        for tempAction in possibleActionList:
+            curValue = self.computeQValueFromValues(state, tempAction)
+            if bestValue == None:
+                bestValue = curValue
+                bestAction = tempAction
+            elif bestValue < curValue:
+                bestValue = curValue
+                bestAction = tempAction
+        return bestAction
 
     def getPolicy(self, state):
         return self.computeActionFromValues(state)
@@ -130,6 +158,7 @@ class AsynchronousValueIterationAgent(ValueIterationAgent):
 
     def runValueIteration(self):
         "*** YOUR CODE HERE ***"
+
 
 class PrioritizedSweepingValueIterationAgent(AsynchronousValueIterationAgent):
     """
